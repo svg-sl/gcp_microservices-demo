@@ -34,6 +34,7 @@ spec:
       #   runAsGroup: 1000
       #   runAsNonRoot: true
       #   runAsUser: 1000
+      # Older project doesn't have this problem: https://github.com/svg-sl/opentelemetry-microservices-demo/blob/sl-node-backend/kubernetes-manifests/currencyservice.yaml
       containers:
       - name: server
         # securityContext:
