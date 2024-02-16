@@ -16,6 +16,12 @@ FROM node:20.11.0-alpine@sha256:2f46fd49c767554c089a5eb219115313b72748d8f62f5ecc
 
 FROM base as builder
 
+# Later, when we parameterize the build:
+# ARG SEALIGHTS_TOKEN
+# ARG BUILD_NAME
+# ARG BRANCH
+ENV BRANCH=devel
+
 # Some packages (e.g. @google-cloud/profiler) require additional
 # deps for post-install scripts
 RUN apk add --update --no-cache \
@@ -29,6 +35,9 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
+# install slnodejs
+RUN npm install slnodejs
+
 FROM base
 
 WORKDIR /usr/src/app
@@ -37,6 +46,28 @@ COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 COPY . .
 
+# turn up sl debug
+ENV NODE_DEBUG=sl
+
+# slnodejs config - get the build session id
+RUN ./node_modules/.bin/slnodejs config \
+    --tokenfile sltoken.txt \
+    --appname "gcp_currencyservice" \
+    --branch "devel" \
+    --build `date +"%y%m%d_%H%M"`
+
+# slnoejs scan - do the build scan
+RUN ./node_modules/.bin/slnodejs scan \
+    --tokenfile sltoken.txt \
+    --buildsessionidfile buildSessionId \
+    --workspacepath "." \
+    --scm none
+
 EXPOSE 7000
 
-ENTRYPOINT [ "node", "server.js" ]
+# ENTRYPOINT [ "node", "server.js" ]
+
+# Run the app with slnodejs like:
+# ./node_modules/.bin/slnodejs run --tokenfile sltoken.txt --buildsessionidfile buildSessionId --workspacepath . -- server.js
+ENTRYPOINT [ "./node_modules/.bin/slnodejs", "run", "--tokenfile", "sltoken.txt", "--buildsessionidfile", "buildSessionId", "--workspacepath", ".", "--", "server.js" ]
+
