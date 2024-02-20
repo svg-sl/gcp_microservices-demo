@@ -15,12 +15,9 @@
 # https://mcr.microsoft.com/product/dotnet/sdk
 FROM mcr.microsoft.com/dotnet/sdk:8.0.101@sha256:8e77ad6fb7c33c17f026424d3bef05ea2ee15d1621e28f312adeab4dc1005866 as builder
 
-# Later, when we parameterize the build:
-# ARG SEALIGHTS_TOKEN
-# ARG BUILD_NAME
-# ENV SEALIGHTS_NODE_AGENT=slnodejs
-# ARG BRANCH
-ENV BRANCH=devel
+ARG SL_APP=gcp_cartservice
+ARG SL_BRANCH
+ARG SL_BUILD
 
 WORKDIR /app
 COPY cartservice.csproj .
@@ -47,11 +44,12 @@ RUN echo "[Sealights] .NetCore Agent version is: `cat ./sl-dotnet-agent/version.
 # grab the token
 COPY sltoken.txt .
 
+
 # Generate a Session ID
 RUN dotnet /sl/sl-dotnet-agent/SL.DotNet.dll  config \
-    --appName "gcp_cartservice" \
-    --branchName "devel" \
-    --buildName  `date +"%y%m%d_%H%M"` \
+    --appName ${SL_APP} \
+    --branchName ${SL_BRANCH} \
+    --buildName  ${SL_BUILD} \
     --includeNamespace "*.service*" \
     --tokenFile /sl/sltoken.txt \
     --identifyMethodsByFqn
@@ -84,6 +82,7 @@ EXPOSE 7070
 ENV DOTNET_EnableDiagnostics=0 \
     ASPNETCORE_HTTP_PORTS=7070
 USER 1000
+
 # ENTRYPOINT ["/app/cartservice"]
 # ENTRYPOINT ["sleep", INFINITY]
 
