@@ -19,8 +19,8 @@ FROM base as builder
 # Later, when we parameterize the build:
 # ARG SEALIGHTS_TOKEN
 # ARG BUILD_NAME
-# ARG BRANCH
-ENV BRANCH=devel
+# ARG SVGBRANCH
+# ENV BRANCH=devel
 
 # Some packages (e.g. @google-cloud/profiler) require additional
 # deps for post-install scripts
@@ -49,14 +49,19 @@ COPY . .
 # turn up sl debug
 ENV NODE_DEBUG=sl
 
+ARG SL_APP=gcp_currencyservice
+ARG SL_BRANCH
+ARG SL_BUILD
+
 # slnodejs config - get the build session id
 RUN ./node_modules/.bin/slnodejs config \
     --tokenfile sltoken.txt \
-    --appname "gcp_currencyservice" \
-    --branch "devel" \
-    --build `date +"%y%m%d_%H%M"`
+    --appname ${SL_APP} \
+    --build ${SL_BUILD} \
+    --branch ${SL_BRANCH} 
+    
 
-# slnoejs scan - do the build scan
+# slnodejs scan - do the build scan
 RUN ./node_modules/.bin/slnodejs scan \
     --tokenfile sltoken.txt \
     --buildsessionidfile buildSessionId \
@@ -69,5 +74,6 @@ EXPOSE 7000
 
 # Run the app with slnodejs like:
 # ./node_modules/.bin/slnodejs run --tokenfile sltoken.txt --buildsessionidfile buildSessionId --workspacepath . -- server.js
+
 ENTRYPOINT [ "./node_modules/.bin/slnodejs", "run", "--tokenfile", "sltoken.txt", "--buildsessionidfile", "buildSessionId", "--workspacepath", ".", "--", "server.js" ]
 
