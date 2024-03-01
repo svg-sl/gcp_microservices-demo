@@ -16,7 +16,8 @@ FROM golang:1.22.0-alpine@sha256:8e96e6cff6a388c2f70f5f662b64120941fcd7d4b89d62f
 RUN apk add --no-cache ca-certificates git
 RUN apk add build-base
 
-# Set up build args for sl
+# Set up build args for sl 
+#  see: skaffold.env
 ARG SL_APP=gcp_productcatalogservice
 ARG SL_BRANCH
 ARG SL_BUILD
@@ -43,7 +44,7 @@ RUN wget -nv -O sealights-slcli.tar.gz \
     && tar -xzf ./sealights-slcli.tar.gz \
     && rm -f ./sealights-slcli.tar.gz
 # Then print the version? (Probably unneccessary)
-RUN ./slgoagent -v 2> /dev/null | grep version && ./slcli -v 2> /dev/null | grep version
+# RUN ./slgoagent -v 2> /dev/null | grep version && ./slcli -v 2> /dev/null | grep version
 
 
 # Initialize the sl CLI
