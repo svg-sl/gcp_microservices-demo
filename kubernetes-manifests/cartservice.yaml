@@ -44,6 +44,9 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
         image: cartservice
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
         ports:
         - containerPort: 7070
         env:
@@ -65,6 +68,10 @@ spec:
           periodSeconds: 10
           grpc:
             port: 7070
+      volumes:
+        - name: tmp-volume
+          emptyDir:
+            sizeLimit: 500Mi
 ---
 apiVersion: v1
 kind: Service
