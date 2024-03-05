@@ -15,6 +15,14 @@
 FROM golang:1.22.0-alpine@sha256:8e96e6cff6a388c2f70f5f662b64120941fcd7d4b89d62fec87520323a316bd9 as builder
 RUN apk add --no-cache ca-certificates git
 RUN apk add build-base
+
+# Set up build args for sl 
+#  see: skaffold.env
+ARG SL_APP=gcp_checkoutservice
+ARG SL_BRANCH
+ARG SL_BUILD
+ENV SEALIGHTS_DISABLE_ON_INIT=false
+
 WORKDIR /src
 
 # restore dependencies
@@ -22,6 +30,37 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+
+# Download the TWO golang agents. Note that these are OS/Arch specific, so we need to know what our host OS/Arch is. 
+# OS_ARCH is one of: darwin-amd64, darwin-arm64, linux-amd64, linux-arm64
+ENV OS_ARCH=linux-amd64
+
+# First, grab the sealights-go-agent, unpack it, and rm the tar.gz
+RUN wget -nv -O sealights-go-agent.tar.gz \
+    https://agents.sealights.co/slgoagent/latest/slgoagent-${OS_ARCH}.tar.gz \
+    && tar -xzf ./sealights-go-agent.tar.gz \
+    && rm -f ./sealights-go-agent.tar.gz
+# Then do that with the sealights-slcli
+RUN wget -nv -O sealights-slcli.tar.gz \
+    https://agents.sealights.co/slcli/latest/slcli-${OS_ARCH}.tar.gz \
+    && tar -xzf ./sealights-slcli.tar.gz \
+    && rm -f ./sealights-slcli.tar.gz
+
+# Initialize the sl CLI
+RUN ./slcli config init --lang go --token ./sltoken.txt
+
+# Generate a sessionId
+RUN ./slcli config create-bsid \
+    --app ${SL_APP} \
+    --branch ${SL_BRANCH} \
+    --build ${SL_BUILD}
+
+# Scan the build
+RUN ./slcli scan \
+    --bsid buildSessionId.txt \
+    --path-to-scanner ./slgoagent \
+    --workspacepath . \
+    --scm none
 
 # Skaffold passes in debug-oriented compiler flags
 ARG SKAFFOLD_GO_GCFLAGS
