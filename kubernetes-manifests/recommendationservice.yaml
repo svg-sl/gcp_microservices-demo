@@ -44,6 +44,9 @@ spec:
           privileged: false
           readOnlyRootFilesystem: true
         image: recommendationservice
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
         ports:
         - containerPort: 8080
         readinessProbe:
@@ -68,6 +71,10 @@ spec:
           limits:
             cpu: 200m
             memory: 450Mi
+      volumes:
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 500Mi
 ---
 apiVersion: v1
 kind: Service
