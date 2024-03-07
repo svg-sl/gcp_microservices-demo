@@ -68,6 +68,8 @@ RUN ./node_modules/.bin/slnodejs scan \
     --workspacepath "." \
     --scm none
 
+
+
 EXPOSE 7000
 
 # ENTRYPOINT [ "node", "server.js" ]

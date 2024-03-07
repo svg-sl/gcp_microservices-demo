@@ -27,6 +27,9 @@ RUN apt-get -qq update \
 # get packages
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+# # Install the agent from pypi -- 
+# # we could also do this by adding it as a project dep so it installs with the last step, I think?
+# RUN pip install sealights-python-agent
 
 FROM base
 # Enable unbuffered logging
@@ -35,14 +38,41 @@ ENV PYTHONUNBUFFERED=1
 # get packages
 WORKDIR /recommendationservice
 
+#bustcache
 # Grab packages from builder
 COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
 
+# Set our SL args
+ARG SL_APP=gcp_recommendationservice
+ARG SL_BRANCH
+ARG SL_BUILD
+# ARG SL_LABID=placeholder
+
+# Install the agent from pypi -- 
+# we could also do this by adding it as a project dep so it installs with the last step, I think?
+RUN pip install sealights-python-agent
+
 # Add the application
 COPY . .
+
+# Generate a session ID
+RUN sl-python config --appname ${SL_APP} --branchname ${SL_BRANCH} --buildname ${SL_BUILD} --workspacepath . --tokenfile sltoken.txt 
+
+
+RUN sl-python scan  --scm none --tokenfile sltoken.txt
+# RUN sl-python scan --tokenfile sltoken.txt --buildsessionidfile buildSessionId.txt --labid ${SL_LABID}
 
 # set listen port
 ENV PORT "8080"
 EXPOSE 8080
 
-ENTRYPOINT ["python", "recommendation_server.py"]
+# ENTRYPOINT ["python", "recommendation_server.py"]
+
+# The command to run the server with sl-python is:
+# sl-python run python recommendation_server.py --labid ${SL_BUILD_SESSION_ID} --tokenfile sltoken.txt
+# So we change our ENTRYPOINT to CMD
+
+# CMD sl-python run python recommendation_server.py --labid ${SL_LAB_ID} --token ${SL_TOKEN}
+
+# CMD sl-python run python recommendation_server.py --labid ${SL_LABID} --tokenfile sltoken.txt
+CMD sl-python run python recommendation_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt
