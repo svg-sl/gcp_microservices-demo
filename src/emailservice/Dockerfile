@@ -16,6 +16,12 @@ FROM python:3.10.8-slim@sha256:abf96998af340975c26177b900c10cfb40716c985325303c0
 
 FROM base as builder
 
+# Set our SL args
+ARG SL_APP=gcp_emailservice
+ARG SL_BRANCH
+ARG SL_BUILD
+# ARG SL_LABID
+
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
         wget g++ \
@@ -24,6 +30,10 @@ RUN apt-get -qq update \
 # get packages
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+# Install the agent from pypi -- 
+# we could also do this by adding it as a project dep so it installs with the prev step, I think?
+RUN pip install sealights-python-agent
+
 
 FROM base
 # Enable unbuffered logging
@@ -39,5 +49,15 @@ COPY --from=builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
 # Add the application
 COPY . .
 
+# Generate a session ID
+RUN sl-python config --appname ${SL_APP} --branchname ${SL_BRANCH} --buildname ${SL_BUILD} --workspacepath . --tokenfile sltoken.txt 
+
+RUN sl-python scan  --scm none --tokenfile sltoken.txt
+# RUN sl-python scan --tokenfile sltoken.txt --buildsessionidfile buildSessionId.txt --labid ${SL_LABID}
+
 EXPOSE 8080
-ENTRYPOINT [ "python", "email_server.py" ]
+# ENTRYPOINT [ "python", "email_server.py" ]
+
+# Switch our ENTRYPOINT to a CMD
+# The command to run the emailserver with sl-python is:
+CMD sl-python run python email_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt
