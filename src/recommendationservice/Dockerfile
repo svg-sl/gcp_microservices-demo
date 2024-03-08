@@ -19,6 +19,12 @@ FROM python:3.10.13-slim@sha256:1d517e04d033a04d86f7de57bf41cae166ca362b37a1cb22
 
 FROM base as builder
 
+# Set our SL args
+ARG SL_APP=gcp_recommendationservice
+ARG SL_BRANCH
+ARG SL_BUILD
+# ARG SL_LABID
+
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
         wget g++ \
@@ -28,7 +34,7 @@ RUN apt-get -qq update \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 # # Install the agent from pypi -- 
-# # we could also do this by adding it as a project dep so it installs with the last step, I think?
+# # we could also do this by adding it as a project dep so it installs with the prev step, I think?
 # RUN pip install sealights-python-agent
 
 FROM base
@@ -46,10 +52,10 @@ COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
 ARG SL_APP=gcp_recommendationservice
 ARG SL_BRANCH
 ARG SL_BUILD
-# ARG SL_LABID=placeholder
+# ARG SL_LABID
 
 # Install the agent from pypi -- 
-# we could also do this by adding it as a project dep so it installs with the last step, I think?
+# we could also do this by adding it as a project dep so it installs with the prev step, I think?
 RUN pip install sealights-python-agent
 
 # Add the application
@@ -72,7 +78,8 @@ EXPOSE 8080
 # sl-python run python recommendation_server.py --labid ${SL_BUILD_SESSION_ID} --tokenfile sltoken.txt
 # So we change our ENTRYPOINT to CMD
 
+CMD sl-python run python recommendation_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt
+
 # CMD sl-python run python recommendation_server.py --labid ${SL_LAB_ID} --token ${SL_TOKEN}
 
 # CMD sl-python run python recommendation_server.py --labid ${SL_LABID} --tokenfile sltoken.txt
-CMD sl-python run python recommendation_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt
