@@ -1,0 +1,10 @@
+{
+  "executionType": "full",
+  "tokenFile": "./sltoken.txt",
+  "createBuildSessionId": true,
+  "appName": "gcp_adservice",
+  "branchName": "devel-agent",
+  "buildName": "SL_Timestamp",
+  "packagesIncluded": "*hipster*",
+  "logEnabled": false
+}

@@ -38,5 +38,7 @@ RUN mkdir -p /opt/cprof && \
 WORKDIR /app
 COPY --from=builder /app .
 
+ENV JAVA_OPTS='-javaagent:/app/sl-test-listener.jar -Dsl.tags=trainingtask -Dsl.tokenFile=/app/sltoken.txt'
+
 EXPOSE 9555
 ENTRYPOINT ["/app/build/install/hipstershop/bin/AdService"]
