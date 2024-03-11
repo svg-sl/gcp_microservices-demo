@@ -30,9 +30,6 @@ RUN apt-get -qq update \
 # get packages
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-# Install the agent from pypi -- 
-# we could also do this by adding it as a project dep so it installs with the prev step, I think?
-RUN pip install sealights-python-agent
 
 
 FROM base
@@ -45,6 +42,16 @@ WORKDIR /email_server
 
 # Grab packages from builder
 COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
+
+# Set our SL args
+ARG SL_APP=gcp_emailservice
+ARG SL_BRANCH
+ARG SL_BUILD
+# ARG SL_LABID
+
+# Install the agent from pypi -- 
+# we could also do this by adding it as a project dep so it installs with the prev step, I think?
+RUN pip install sealights-python-agent
 
 # Add the application
 COPY . .
