@@ -19,11 +19,12 @@ FROM python:3.10.13-slim@sha256:1d517e04d033a04d86f7de57bf41cae166ca362b37a1cb22
 
 FROM base as builder
 
-# Set our SL args
-ARG SL_APP=gcp_recommendationservice
-ARG SL_BRANCH
-ARG SL_BUILD
-# ARG SL_LABID
+# # Set our SL args
+# ARG SL_BRANCH
+# ARG SL_BUILD
+# ARG SL_LABID=monitorbot_test3
+# ARG SL_APP=gcp_recommendationservice
+
 
 RUN apt-get -qq update \
     && apt-get install -y --no-install-recommends \
@@ -49,10 +50,13 @@ WORKDIR /recommendationservice
 COPY --from=builder /usr/local/lib/python3.10/ /usr/local/lib/python3.10/
 
 # Set our SL args
-ARG SL_APP=gcp_recommendationservice
+
 ARG SL_BRANCH
+ARG SL_APP=gcp_recommendationservice
 ARG SL_BUILD
-# ARG SL_LABID
+# Only some Dockerfile commands perform variable expansions; for RUN, CMD, and ENTRYPOINT, it is only done by a shell. When a shell does the expansion it's not aware of Docker-specific ARGs, only environment variables, so you need to copy the argument to an ENV. This affects our ENTRYPOINT/CMD 
+ARG SL_LABID=monitorbot_test4
+ENV SL_LABID=${SL_LABID}
 
 # Install the agent from pypi -- 
 # we could also do this by adding it as a project dep so it installs with the prev step, I think?
@@ -65,7 +69,7 @@ COPY . .
 RUN sl-python config --appname ${SL_APP} --branchname ${SL_BRANCH} --buildname ${SL_BUILD} --workspacepath . --tokenfile sltoken.txt 
 
 
-RUN sl-python scan  --scm none --tokenfile sltoken.txt
+RUN sl-python scan  --scm none --tokenfile sltoken.txt --buildsessionidfile buildSessionId.txt --labid ${SL_LABID}
 # RUN sl-python scan --tokenfile sltoken.txt --buildsessionidfile buildSessionId.txt --labid ${SL_LABID}
 
 # set listen port
@@ -78,7 +82,10 @@ EXPOSE 8080
 # sl-python run python recommendation_server.py --labid ${SL_BUILD_SESSION_ID} --tokenfile sltoken.txt
 # So we change our ENTRYPOINT to CMD
 
-CMD sl-python run python recommendation_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt
+# ENTRYPOINT ["sl-python","run","python","recommendation_server.py","--buildsessionidfile","buildSessionId.txt","--tokenfile","sltoken.txt","--labid",${SL_LABID}]
+
+CMD sl-python run python recommendation_server.py --buildsessionidfile buildSessionId.txt --tokenfile sltoken.txt --labid ${SL_LABID}
+# --labid monitorbot_test1
 
 # CMD sl-python run python recommendation_server.py --labid ${SL_LAB_ID} --token ${SL_TOKEN}
 
