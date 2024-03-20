@@ -27,6 +27,8 @@ RUN ./gradlew installDist
 
 FROM eclipse-temurin:21.0.2_13-jre-alpine@sha256:fb4150a30569aadae9d693d949684a00653411528e62498b9900940c9b5b8a66
 
+ENV JAVA_OPTS="-javaagent:./sl-cd-agent.jar -Dsl.tokenfile=sltoken.txt -Dsl.appName=svg_adservice -Dsl.buildName=svg_bld032020241518 -Dsl.tags=JRE -Dsl.labId=integ_cdonlyagent_103b_SVGGCPcddemo -Dsl.includes=*hipster* -Dsl.workspace=/app/build/install/hipstershop/lib"
+
 RUN apk add --no-cache ca-certificates
 
 # Download Stackdriver Profiler Java agent
